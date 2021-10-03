@@ -11,7 +11,7 @@ namespace FibonacciService
 
         private static string FindClosetFibonnacciNumbers(int searchForNumber)
         {
-            if (searchForNumber == 0)
+            if (searchForNumber <= 0)
             {
                 return "0";
             }
