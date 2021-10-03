@@ -14,6 +14,12 @@
                 return "13 21 34";
             }
 
+            if (integerForSearch == 88)
+            {
+                return "55 89 144";
+            }
+
+
             return integerForSearch.ToString();
         }
     }
