@@ -9,7 +9,6 @@ namespace FibonacciService
         {
             long.TryParse(integerForSearch, out long searchForNumber);
             return FindClosetFibonnacciNumbers(searchForNumber);
-
         }
 
         private static string FindClosetFibonnacciNumbers(long searchForNumber)
