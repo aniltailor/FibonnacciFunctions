@@ -1,0 +1,64 @@
+trigger:
+   branches:
+    include:
+    - refs/heads/master
+    - refs/heads/feature/*
+    - refs/heads/release/*
+name: $(date:yyyy).$(date:MM).$(date:dd)$(rev:.r)
+
+stages:
+  - stage: build
+    displayName: Build
+    variables:
+      BuildConfiguration: 'Release'
+      BuildPlatform: 'Any CPU'
+      system.debug: false
+    jobs:
+    - job: Job_1
+      displayName: BuildInfrasructure
+      cancelTimeoutInMinutes: '1'
+
+    pool:
+      name: Azure Pipelines
+      vmImage: 'windows-2019'
+
+      demands:
+      - msbuild
+      - visualstudio
+      - vstest
+      - msbuild
+      - visualstudio
+
+steps:
+- task: qetza.replacetokens.replacetokens-task.replacetokens@3
+  displayName: 'Replace tokens'
+  inputs:
+    targetFiles: '**/Infrastructure/Templates/*.json'
+    tokenPrefix: '$('
+    tokenSuffix: ')$'
+
+steps:
+- task: qetza.replacetokens.replacetokens-task.replacetokens@3
+  displayName: 'Replace tokens in CreateResourceGroup script'
+  inputs:
+    targetFiles: '**/Infrastructure/Scripts/CreateResourceGroup.ps1'
+    escapeType: none
+    tokenPrefix: '$('
+    tokenSuffix: ')$'	
+	
+- task: AzurePowerShell@5
+  displayName: 'Create ResourceGroup'
+  inputs:
+    azureSubscription: 'MySubscription'
+    ScriptPath: '$(System.DefaultWorkingDirectory)/FibonnacciFunctionsByAnilTailor/CreateResourceGroup.ps1'
+    azurePowerShellVersion: LatestVersion
+
+steps:
+- task: AzureResourceManagerTemplateDeployment@3
+  displayName: 'ARM Template Deployment For Function App'
+  inputs:
+    azureResourceManagerConnection: '$(MyConnectionName)'
+    subscriptionId: 'd2aede04-e1b0-4db8-ae0c-6e2c65cf0004'
+    resourceGroupName: '$(FibonnacciFunctionsResourceGroupName)'
+    location: '$(ResourceGroupLocation)'
+    csmFile: '$(System.DefaultWorkingDirectory)/FibonnacciFunctionsByAnilTailor/Templates/EnvironmentTemplate.json'

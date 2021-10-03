@@ -1,0 +1,106 @@
+trigger:
+   branches:
+    include:
+    - refs/heads/master
+    - refs/heads/feature/*
+    - refs/heads/release/*
+name: $(date:yyyy).$(date:MM).$(date:dd)$(rev:.r)
+
+stages:
+  - stage: build
+    displayName: Build
+    variables:
+      BuildConfiguration: 'Release'
+      BuildPlatform: 'Any CPU'
+      system.debug: false
+    jobs:
+    - job: Job_1
+      displayName: Build
+      cancelTimeoutInMinutes: '1'
+
+    pool:
+      name: Azure Pipelines
+      vmImage: 'windows-2019'
+
+      demands:
+      - msbuild
+      - visualstudio
+      - vstest
+      - msbuild
+      - visualstudio
+
+    steps:
+    - task: NuGetToolInstaller@1
+      displayName: 'Use NuGet 5.6.0'
+      inputs:
+        versionSpec: 5.6.0
+
+    - task: NuGetCommand@2
+      displayName: 'NuGet restore'
+      inputs:
+        vstsFeed: '76e5ade9-20e7-4f98-ab19-8c7a0b495e84'
+
+    - task: UseDotNet@2
+      displayName: 'Use .NET Core SDK 3.1.x'
+      inputs:
+        version: 3.1.302
+
+    - task: VSBuild@1
+      displayName: 'Build solution **\*.sln'
+      inputs:
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactstagingdirectory)\\" '
+        platform: '$(BuildPlatform)'
+        configuration: '$(BuildConfiguration)'
+        clean: true
+
+    - task: CopyFiles@2
+      displayName: 'Copy solution build artifacts'
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        Contents: '**\bin\**'
+        TargetFolder: '$(build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: drop'
+      
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: Function'
+      inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)\FibonacciFunctions'
+          ArtifactName: FibonacciFunctions
+
+- stage: Release
+  displayName: Release
+  condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment:
+    displayName: Release
+    pool:
+      name: Default
+    environment: Release
+    strategy:
+    runOnce:
+    deploy:
+    steps:
+    - task: AzureAppServiceManage@0
+      displayName: 'Stop Azure Function App Service'
+      inputs:
+        azureSubscription: '$(AzureSubscription)'
+        Action: 'Stop Azure App Service'
+        WebAppName: 'FindInFibonacci'
+        
+    - task: AzureRmWebAppDeployment@3
+      displayName: 'Azure App Service Deploy: Functions'
+      inputs:
+        azureSubscription: '$(AzureSubscription)'
+        appType: functionapp
+        WebAppName: 'FindInFibonacci'
+        Package: '$(System.DefaultWorkingDirectory)/FibonnacciFunctionsByAnilTailor/FibonacciFunctions/FibonacciFunctions.zip'
+        TakeAppOfflineFlag: true
+        
+    - task: AzureAppServiceManage@0
+      displayName: 'Start Azure Function App Service'
+      inputs:
+        azureSubscription: '$(AzureSubscription)'
+        Action: 'Start Azure App Service'
+        WebAppName: 'FindInFibonacci'

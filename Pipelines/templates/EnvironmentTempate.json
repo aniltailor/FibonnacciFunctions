@@ -1,0 +1,267 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "$(Environment)$",
+      "allowedValues": [
+        "dev1",
+        "int1",
+        "tst1",
+        "ppd1",
+        "prod"
+      ]
+    },
+    "resourceNumber": {
+      "type": "string",
+      "defaultValue": "$(EnvironmentNumber)$"
+    },
+    "resourceGroupLocation": {
+      "type": "string",
+      "defaultValue": "$(ResourceGroupLocation)$"
+    },
+    "tier": {
+      "type": "string",
+      "defaultValue": "$(Tier)$"
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "$(OmsWorkspaceName)$",
+      "metadata": {
+        "description": "OMS Monitor Name"
+      }
+    },
+    "omsWorkspaceRG": {
+      "type": "string",
+      "defaultValue": "$(OmsWorkspaceRG)$",
+      "metadata": {
+        "description": "OMS Monitor Resource Group"
+      }
+    },
+    "omsWorkspaceSub": {
+      "type": "string",
+      "defaultValue": "$(OmsWorkspaceSub)$",
+      "metadata": {
+        "description": "OMS Monitor Subscription Id"
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "$(SkuName)$",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "SKU for the vault"
+      }
+    },
+    "vstsSpObjectId": {
+      "type": "string",
+      "defaultValue": "$(VstsSpObjectId)$",
+      "metadata": {
+        "description": "Object Id of the VSTS Service Principal."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "$(StorageAccountType)$",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "functionAppName": {
+      "type": "string",
+      "defaultValue": "$(AppServiceName)$"
+    },
+    "functionsStorageName": {
+      "type": "string",
+      "defaultValue": "$(FunctionsStorageName)$"
+    },
+    "functionsRuntimeVersion": {
+      "type": "string",
+      "defaultValue": "~3"
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "$(HostingPlanName)$"
+    },
+    "appServicePrincipalApplicationId": {
+      "type": "string",
+      "defaultValue": "$(AppServicePrincipalApplicationId)$"
+    },
+    "authCredentialType": {
+      "type": "string",
+      "defaultValue": "$(AuthCredentialType)$"
+    },
+    "authorizationResource": {
+      "type": "string",
+      "defaultValue": "$(AuthorizationResource)$"
+    }
+  },
+  "variables": {
+    "storageAccountName": "[parameters('functionsStorageName')]",
+    "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+    "insightsName": "ai-FindInFibonacci"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2019-06-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]",
+        "tier": "Standard"
+      }, 
+      "properties": {
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "apiVersion": "2015-05-01",
+      "name": "[variables('insightsName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[parameters('ResourceGroupLocation')]",
+        "tags": {
+            "displayName": "FindInFibonacciAppInsights",
+            "location": "[parameters('ResourceGroupLocation')]",
+            "ProductEnvironment": "[parameters('environment')]",
+            "ProductName": "FindInFibonacci"
+        },
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "[parameters('hostingPlanName')]",
+      "location": "[parameters('ResourceGroupLocation')]",
+        "tags": {
+            "ProductName": "FindInFibonacci",
+            "ProductEnvironment": "[parameters('environment')]"
+        },
+      "sku": {
+        "name": "EP1",
+        "tier": "ElasticPremium",
+        "size": "EP1",
+        "family": "EP",
+        "capacity": 1
+      },
+      "kind": "elastic",
+      "properties": {
+        "perSiteScaling": false,
+        "maximumElasticWorkerCount": 20,
+        "isSpot": false,
+        "reserved": false,
+        "isXenon": false,
+        "hyperV": false,
+        "targetWorkerCount": 0,
+        "targetWorkerSizeId": 0
+      }
+    },
+        {
+        "type": "Microsoft.Web/sites",
+        "kind": "functionapp",
+        "name": "[parameters('functionAppName')]",
+        "apiVersion": "2016-08-01",
+        "location": "[parameters('ResourceGroupLocation')]",
+        "identity": {
+            "type": "SystemAssigned"
+        },
+        "dependsOn": [
+            "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+            "[resourceId('Microsoft.Insights/components', variables('insightsName'))]",         
+        ],
+        "properties": {
+            "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+            "siteConfig": {
+                "appSettings": [
+                    {
+                        "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                        "value": "[reference(resourceId('Microsoft.Insights/components', variables('insightsName')), '2014-04-01').InstrumentationKey]"
+                    },
+                    {
+                        "name": "AzureWebJobsDashboard",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                    },
+                    {
+                        "name": "AzureWebJobsStorage",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                    },
+                    {
+                        "name": "AzureConfigurationStorage",
+                        "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                    },
+                    {
+                        "name": "FUNCTIONS_EXTENSION_VERSION",
+                        "value": "[parameters('functionsRuntimeVersion')]"
+                    },
+                    {
+                        "name": "WEBSITE_TIME_ZONE",
+                        "value": "GMT Standard Time"
+                    },
+                    {
+                        "name": "FUNCTIONS_WORKER_RUNTIME",
+                        "value": "dotnet"
+                    },
+                    {
+                        "name": "Authorization.Authority",
+                        "value": "https://login.microsoftonline.com/prudentialplc.onmicrosoft.com"
+                    },
+                    {
+                        "name": "Authorization.TenantId",
+                        "value": "[subscription().tenantId]"
+                    },
+                    {
+                        "name": "Authorization.CertificateSubject",
+                        "value": "[parameters('servicePrincipalName')]"
+                    },
+                    {
+                        "name": "Authorization.ClientId",
+                        "value": "[parameters('appServicePrincipalApplicationId')]"
+                    },
+                    {
+                        "name": "Authorization.CredentialType",
+                        "value": "[parameters('authCredentialType')]"
+                    },
+                    {
+                        "name": "Authorization.Resource",
+                        "value": "[parameters('authorizationResource')]"
+                    },
+                    {
+                        "name": "CertificateAuthority",
+                        "value": "[concat('https://login.windows.net/', subscription().tenantId)]"
+                    },
+                    {
+                        "name": "ServicePrincipalClientId",
+                        "value": "[parameters('appServicePrincipalApplicationId')]"
+                    },
+                    {
+                        "name": "Vault.Resource",
+                        "value": "https://vault.azure.net"
+                    },
+                    {
+                        "name": "Vault.Uri",
+                        "value": "[concat('https://',parameters('appKeyVaultName'),'.vault.azure.net/')]"
+                    },
+                    {
+                        "name": "WEBSITE_LOAD_CERTIFICATES",
+                        "value": "*"
+                    }
+                ]
+            }
+        }
+    }
+  ],
+  "outputs": {
+  }
+}
