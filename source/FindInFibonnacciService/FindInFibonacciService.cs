@@ -6,23 +6,32 @@ namespace FibonacciService
     {
         public string FindFibonacciNumbers(int integerForSearch)
         {
+            return FindClosetFibonnacciNumbers(integerForSearch);
+        }
 
-            if (integerForSearch == 6)
+        private static string FindClosetFibonnacciNumbers(int searchForNumber)
+        {
+            if (searchForNumber == 0)
             {
-                return "5 3 8";
+                return "0";
             }
 
-            if (integerForSearch == 20)
+            var firstFibonacciNumber = 0;
+            var secondFibonacciNumber = 1;
+            var thirdFibonacciNumber = secondFibonacciNumber;
+            while (thirdFibonacciNumber <= searchForNumber)
             {
-                return "21 13 34";
+                firstFibonacciNumber = secondFibonacciNumber;
+                secondFibonacciNumber = thirdFibonacciNumber;
+                thirdFibonacciNumber = firstFibonacciNumber + secondFibonacciNumber;
             }
+            var closestNumber = (Math.Abs(thirdFibonacciNumber - searchForNumber) >=
+                                 Math.Abs(secondFibonacciNumber - searchForNumber)) ?
+                secondFibonacciNumber : thirdFibonacciNumber;
 
-            if (integerForSearch == 88)
-            {
-                return " 89 55 144";
-            }
-
-            return integerForSearch.ToString();
+            return closestNumber == thirdFibonacciNumber ?
+                $"{thirdFibonacciNumber} {secondFibonacciNumber} {secondFibonacciNumber + thirdFibonacciNumber}" :
+                $"{secondFibonacciNumber} {firstFibonacciNumber} {thirdFibonacciNumber}";
         }
     }
 }
