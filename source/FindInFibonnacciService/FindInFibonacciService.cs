@@ -1,23 +1,26 @@
 ﻿using System;
+using System.Globalization;
 
 namespace FibonacciService
 {
     public class FindInFibonacciService : IFindInFibonacciService
     {
-        public string FindFibonacciNumbers(int integerForSearch)
+        public string FindFibonacciNumbers(string integerForSearch)
         {
-            return FindClosetFibonnacciNumbers(integerForSearch);
+            long.TryParse(integerForSearch, out long searchForNumber);
+            return FindClosetFibonnacciNumbers(searchForNumber);
+
         }
 
-        private static string FindClosetFibonnacciNumbers(int searchForNumber)
+        private static string FindClosetFibonnacciNumbers(long searchForNumber)
         {
             if (searchForNumber <= 0)
             {
                 return "0";
             }
 
-            var firstFibonacciNumber = 0;
-            var secondFibonacciNumber = 1;
+            long firstFibonacciNumber = 0;
+            long secondFibonacciNumber = 1;
             var thirdFibonacciNumber = secondFibonacciNumber;
             while (thirdFibonacciNumber <= searchForNumber)
             {

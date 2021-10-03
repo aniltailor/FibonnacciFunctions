@@ -2,6 +2,6 @@
 {
     public interface IFindInFibonacciService
     {
-        string FindFibonacciNumbers(int integerForSearch);
+        string FindFibonacciNumbers(string integerForSearch);
     }
 }
