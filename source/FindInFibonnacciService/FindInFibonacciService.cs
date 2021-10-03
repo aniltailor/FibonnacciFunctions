@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 
 namespace FibonacciService
 {
@@ -7,8 +6,9 @@ namespace FibonacciService
     {
         public string FindFibonacciNumbers(string integerForSearch)
         {
-            long.TryParse(integerForSearch, out long searchForNumber);
-            return FindClosetFibonnacciNumbers(searchForNumber);
+            return long.TryParse(integerForSearch, out var searchForNumber) ?
+                FindClosetFibonnacciNumbers(searchForNumber) :
+                $"The value {integerForSearch} could not be converted to a long integer type.";
         }
 
         private static string FindClosetFibonnacciNumbers(long searchForNumber)
