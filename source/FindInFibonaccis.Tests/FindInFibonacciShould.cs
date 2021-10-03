@@ -17,10 +17,10 @@ namespace FindInFibonacci.Tests
         public void ReturnExpectedFibonacciNumberGivenAnIntegerOf6()
         {
             const int integerForSearch = 6;
-            var ExpectedResult = "5 3 8";
+            var expectedResult = "5 3 8";
             var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
 
-            result.Should().Be(ExpectedResult,"Should find nearest Fibonacci number and its closest neighbours");
+            result.Should().Be(expectedResult,"Should find nearest Fibonacci number and its closest neighbours");
         }
     }
 }
