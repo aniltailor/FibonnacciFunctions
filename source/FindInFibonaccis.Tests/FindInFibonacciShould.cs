@@ -17,6 +17,7 @@ namespace FindInFibonacci.Tests
         [TestCase(6, "5 3 8")]
         [TestCase(20, "21 13 34")]
         [TestCase(88, "89 55 144")]
+        [TestCase(-1, "0")]
         public void ReturnExpectedFibonacciNumberGivenAnInteger(int integerForSearch, string expectedResult)
         {
             var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
