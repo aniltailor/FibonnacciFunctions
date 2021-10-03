@@ -37,7 +37,7 @@ namespace FindInFibonacci.Tests
         public void ReturnExpectedFibonacciNumberGivenAnIntegerOf20()
         {
             const int integerForSearch = 20;
-            const string expectedResult = "13 21 34";
+            const string expectedResult = "21 13 34";
             var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
 
             result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
@@ -47,7 +47,7 @@ namespace FindInFibonacci.Tests
         public void ReturnExpectedFibonacciNumberGivenAnIntegerOf88()
         {
             const int integerForSearch = 88;
-            const string expectedResult = "55 89 144";
+            const string expectedResult = "89 55 144";
             var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
 
             result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
