@@ -13,6 +13,16 @@ namespace FindInFibonacci.Tests
             _findInFibonacciService = new FindInFibonacciService();
         }
 
+        [TestCase(0,"0")]
+        [TestCase(6, "5 3 8")]
+        [TestCase(20, "21 13 34")]
+        [TestCase(88, "89 55 144")]
+        public void ReturnExpectedFibonacciNumberGivenAnInteger(int integerForSearch, string expectedResult)
+        {
+            var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
+            result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
+        }
+
         [Test]
         public void ReturnExpectedFibonacciNumberGivenAnIntegerOf6()
         {
@@ -52,7 +62,6 @@ namespace FindInFibonacci.Tests
 
             result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
         }
-
 
     }
 }
