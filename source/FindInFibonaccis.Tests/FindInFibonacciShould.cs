@@ -43,5 +43,16 @@ namespace FindInFibonacci.Tests
             result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
         }
 
+        [Test]
+        public void ReturnExpectedFibonacciNumberGivenAnIntegerOf88()
+        {
+            const int integerForSearch = 88;
+            const string expectedResult = "55 89 144";
+            var result = _findInFibonacciService.FindFibonacciNumbers(integerForSearch);
+
+            result.Should().Be(expectedResult, "Should find nearest Fibonacci number and its closest neighbours");
+        }
+
+
     }
 }
